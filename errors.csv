@@ -1,0 +1,218 @@
+timestamp,student_id,error_type,raw_error,code_snippet
+2026-07-13T10:12:00,student_01,undefined_variable,NameError: name 'scor' is not defined,print(scor)
+2026-07-13T10:40:00,student_02,index_out_of_range,IndexError: list index out of range,items = [1] ; print(items[3])
+2026-07-13T11:05:00,student_03,scope_issue,UnboundLocalError: cannot access local variable 'total',def add(x): total = total + x
+2026-07-13T14:22:00,student_04,type_mismatch,TypeError: can only concatenate str (not int) to str,age = input() ; print(age + 1)
+2026-07-13T15:01:00,student_01,undefined_variable,NameError: name 'reslut' is not defined,print(reslut)
+2026-07-14T09:15:00,student_03,scope_issue,UnboundLocalError: cannot access local variable 'count',def tick(): count = count + 1
+2026-07-14T10:30:00,student_05,return_vs_print,TypeError: unsupported operand for +: NoneType and int,def add(a): print(a) ; total = add(1) + 2
+2026-07-14T11:45:00,student_02,index_out_of_range,IndexError: list index out of range,for i in range(5): print(nums[i])
+2026-07-14T13:20:00,student_04,function_argument_error,TypeError: greet() missing 1 required argument,def greet(name): ... ; greet()
+2026-07-14T16:00:00,student_03,scope_issue,UnboundLocalError: cannot access local variable 'score',def bonus(): score = score * 2
+2026-07-15T09:10:00,student_05,dict_list_operation_error,KeyError: 'phone',user = {'name':'A'} ; print(user['phone'])
+2026-07-15T10:25:00,student_01,type_mismatch,TypeError: can only concatenate str (not int) to str,print('Score: ' + 95)
+2026-07-15T14:22:29,student_01,return_vs_print,"""expected 25 but always prints 0","number = 0
+square = 0
+def get_input_number():
+    # Function to get the input number from the user
+    # Code to retrieve and return the number
+    global number
+    number = int(input(""Please input your number: ""))
+    return number
+    print(number)
+
+def calculate_square(num):
+    # Function to calculate the square of a number
+    # Code to perform the calculation
+    # Return the square value
+    global number
+    square = number * number
+    return square
+    print(square)
+
+def display_result(result):
+    # Function to display the calculated result
+    # Code to display the result
+    global square
+    result = square
+    print(result)
+    
+number = get_input_number()
+outcome = calculate_square(number)
+display_result(outcome)"
+2026-07-15T14:24:46,student_01,scope_issue,expected 25 but always prints 0,"number = 0
+square = 0
+def get_input_number():
+    # Function to get the input number from the user
+    # Code to retrieve and return the number
+    global number
+    number = int(input(""Please input your number: ""))
+    return number
+    print(number)
+
+def calculate_square(num):
+    # Function to calculate the square of a number
+    # Code to perform the calculation
+    # Return the square value
+    global number
+    square = number * number
+    return square
+    print(square)
+
+def display_result(result):
+    # Function to display the calculated result
+    # Code to display the result
+    global square
+    result = square
+    print(result)
+    
+number = get_input_number()
+outcome = calculate_square(number)
+display_result(outcome)"
+2026-07-15T14:49:34,student_01,return_vs_print,"if input is 5, expected 25, got 0.","number = 0
+square = 0
+def get_input_number():
+    # Function to get the input number from the user
+    # Code to retrieve and return the number
+    global number
+    number = int(input(""Please input your number: ""))
+    return number
+    print(number)
+
+def calculate_square(num):
+    # Function to calculate the square of a number
+    # Code to perform the calculation
+    # Return the square value
+    global number
+    square = number * number
+    return square
+    print(square)
+
+def display_result(result):
+    # Function to display the calculated result
+    # Code to display the result
+    global square
+    result = square
+    print(result)
+    
+number = get_input_number()
+outcome = calculate_square(number)
+display_result(outcome)"
+2026-07-15T16:35:37,student_08,return_vs_print,"if input is 5, expected 25, got 0.","number = 0
+square = 0
+def get_input_number():
+    # Function to get the input number from the user
+    # Code to retrieve and return the number
+    global number
+    number = int(input(""Please input your number: ""))
+    return number
+    print(number)
+
+def calculate_square(num):
+    # Function to calculate the square of a number
+    # Code to perform the calculation
+    # Return the square value
+    global number
+    square = number * number
+    return square
+    print(square)
+
+def display_result(result):
+    # Function to display the calculated result
+    # Code to display the result
+    global square
+    result = square
+    print(result)
+    
+number = get_input_number()
+outcome = calculate_square(number)
+display_result(outcome)"
+2026-07-16T10:31:01,student_01,undefined_variable,"Traceback (most recent call last):
+  File ""<string>"", line 1, in <module>
+NameError: name 'error' is not defined
+",print(error)
+2026-07-16T16:12:34,student_01,undefined_variable,"Traceback (most recent call last):
+  File ""<string>"", line 1, in <module>
+NameError: name 'error' is not defined
+",print(error)
+2026-07-16T16:12:58,student_01,undefined_variable,"Traceback (most recent call last):
+  File ""<string>"", line 1, in <module>
+NameError: name 'error' is not defined
+",print(Daniel)
+2026-07-16T16:13:06,student_01,undefined_variable,"Traceback (most recent call last):
+  File ""<string>"", line 1, in <module>
+NameError: name 'error' is not defined
+",print(Daniel)
+2026-07-16T16:13:09,student_01,undefined_variable,"Traceback (most recent call last):
+  File ""<string>"", line 1, in <module>
+NameError: name 'error' is not defined
+",print(Daniel)
+2026-07-16T16:13:11,student_01,undefined_variable,"Traceback (most recent call last):
+  File ""<string>"", line 1, in <module>
+NameError: name 'error' is not defined
+",print(Daniel)
+2026-07-16T16:59:07,student_01,undefined_variable,"Traceback (most recent call last):
+  File ""<string>"", line 1, in <module>
+NameError: name 'error' is not defined
+",print(Daniel)
+2026-07-16T17:03:22,student_01,undefined_variable,"Traceback (most recent call last):
+  File ""<string>"", line 1, in <module>
+NameError: name 'error' is not defined
+",print(Big)
+2026-07-16T17:10:58,student_01,undefined_variable,"Traceback (most recent call last):
+  File ""<string>"", line 1, in <module>
+NameError: name 'error' is not defined
+",print(Hellen)
+2026-07-16T17:55:19,student_01,undefined_variable,"Traceback (most recent call last):
+  File ""<string>"", line 1, in <module>
+NameError: name 'error' is not defined
+",print(CHO)
+2026-07-17T17:02:50,student_01,return_vs_print,"return and local
+","number = 0
+square = 0
+def get_input_number():
+    # Function to get the input number from the user
+    # Code to retrieve and return the number
+    global number
+    number = int(input(""Please input your number: ""))
+    return number
+    print(number)
+
+def calculate_square(num):
+    # Function to calculate the square of a number
+    # Code to perform the calculation
+    # Return the square value
+    global number
+    square = number * number
+    return square
+    print(square)
+
+def display_result(result):
+    # Function to display the calculated result
+    # Code to display the result
+    global square
+    result = square
+    print(result)
+    
+number = get_input_number()
+outcome = calculate_square(number)
+display_result(outcome)"
+2026-07-17T23:20:46,student_07,undefined_variable,name error,print(abc)
+2026-07-17T23:22:38,student_07,undefined_variable,name error,print(abc)
+2026-07-17T23:22:43,student_07,undefined_variable,name error,print(abc)
+2026-07-17T23:53:37,student_08,scope_issue,scope,"def calculate_square(num):
+    square = num * num
+print(square)    
+"
+2026-07-18T00:06:08,student_06,scope_issue,local variable,"def calculate_area(num):
+    area = num * num
+
+print(num)"
+2026-07-18T00:09:59,student_06,scope_issue,local variable,"def calculate_area(num):
+    area = num * num
+
+print(num)"
+2026-07-18T00:10:00,student_06,scope_issue,local variable,"def calculate_area(num):
+    area = num * num
+
+print(num)"
