@@ -47,20 +47,21 @@ else:
 if matrix:
     # 全站换装: 黑底 + 荧光绿 + 等宽"黑客"字体 + 微微发光
     # full restyle: black, neon green, monospace hacker font, soft glow
+    # 弹窗(dialog)挂在 .stApp 外面 — 用 :is(两个范围) 让主页面和弹窗一起变绿
+    # dialogs mount OUTSIDE .stApp; :is(both scopes) themes page + modal together
     st.markdown("""<style>
-    .stApp, [data-testid="stHeader"] {background:#000 !important}
-    .stApp, .stApp p, .stApp span, .stApp label, .stApp li,
-    .stApp h1, .stApp h2, .stApp h3, .stApp small,
-    .stApp [data-testid="stMetricValue"], .stApp [data-testid="stMetricLabel"] {
+    :is(.stApp, div[role="dialog"]), [data-testid="stHeader"] {background:#000 !important}
+    :is(.stApp, div[role="dialog"]) :is(p, span, label, li, h1, h2, h3, small,
+        [data-testid="stMetricValue"], [data-testid="stMetricLabel"]) {
         color:#00FF41 !important;
         font-family:"Courier New", monospace !important;
         text-shadow:0 0 6px rgba(0,255,65,.35);
     }
-    .stApp textarea, .stApp input, .stApp [data-baseweb="select"] > div {
+    :is(.stApp, div[role="dialog"]) :is(textarea, input, [data-baseweb="select"] > div) {
         background:#020D04 !important; color:#00FF41 !important;
         border:1px solid #0F5C23 !important; font-family:"Courier New",monospace !important;
     }
-    .stApp button {
+    :is(.stApp, div[role="dialog"]) button {
         background:#020D04 !important; color:#00FF41 !important;
         border:1px solid #00FF41 !important;
     }
@@ -73,8 +74,7 @@ if matrix:
        上面强制 Courier 会把它变回原文压在标签上,这里把图标字体还回去
        icons are an ICON FONT (the span literally contains its name);
        forcing Courier broke the ligature — restore the icon font here */
-    .stApp [data-testid="stIconMaterial"],
-    .stApp span[class*="material-symbols"] {
+    [data-testid="stIconMaterial"], span[class*="material-symbols"] {
         font-family:"Material Symbols Rounded" !important;
         text-shadow:none !important;
     }
@@ -144,7 +144,7 @@ if (!P.__stardust && !P.matchMedia('(prefers-reduced-motion: reduce)').matches) 
       --rot:${Math.random()*50 - 25}deg;
       animation:sd-fade ${0.7 + Math.random()*0.5}s ease-out forwards`;
     doc.body.appendChild(s);
-    setTimeout(() => s.remove(), 1300);   // 心燃尽即删除,页面不积垃圾 / clean up
+    P.setTimeout(() => s.remove(), 1300);  // 用主页面的计时器,重跑也不失效 / parent timer
   });
 }
 </script>"""
@@ -159,18 +159,25 @@ components.html(_spark_js.replace("__GLYPHS__", _json.dumps(SPARK_GLYPHS))
 components.html(("""<script>
 const P = window.parent, doc = P.document, ON = __ON__;
 let c = doc.getElementById('mx-rain');
-if (ON && !c && !P.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  c = doc.createElement('canvas'); c.id = 'mx-rain';
-  // 盖在页面上但只有 14% 不透明度,内容照样能读; 点击穿透
-  // overlays the page at 14% opacity — content stays readable, clicks pass through
-  c.style.cssText = 'position:fixed;inset:0;z-index:9990;pointer-events:none;opacity:.14';
-  doc.body.appendChild(c);
+// 计时器要挂在主页面(P.setInterval)上 — 挂在组件小窗上的话,页面一重跑小窗被销毁,
+// 雨就冻住了; 每次重跑先停旧的再开新的
+// the timer must live on the PARENT page: component iframes die on every rerun,
+// which froze the rain. Stop the old timer, restart fresh each run.
+if (P.__mxTimer) { P.clearInterval(P.__mxTimer); P.__mxTimer = null; }
+if (ON && !P.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (!c) {
+    c = doc.createElement('canvas'); c.id = 'mx-rain';
+    // 盖在页面上但只有 14% 不透明度,内容照样能读; 点击穿透
+    // overlays the page at 14% opacity — content stays readable, clicks pass through
+    c.style.cssText = 'position:fixed;inset:0;z-index:9990;pointer-events:none;opacity:.14';
+    doc.body.appendChild(c);
+  }
   const ctx = c.getContext('2d');
   const size = () => { c.width = P.innerWidth; c.height = P.innerHeight; };
   size(); P.addEventListener('resize', size);
   const chars = 'アイウエオカキクケコサシスセソ01234567890101';
   const fs = 16; let drops = [];
-  P.__mxTimer = setInterval(() => {
+  P.__mxTimer = P.setInterval(() => {
     const n = Math.ceil(c.width / fs);
     while (drops.length < n) drops.push(Math.random() * -60);
     drops.length = n;
@@ -184,7 +191,7 @@ if (ON && !c && !P.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     }
   }, 50);
 }
-if (!ON && c) { clearInterval(P.__mxTimer); c.remove(); }
+if (!ON && c) c.remove();
 </script>""").replace("__ON__", "true" if matrix else "false"), height=0)
 
 # —— Matrix 光标时钟 / cursor clock (90s classic, matrix green) ——————
@@ -292,9 +299,11 @@ def show_practice(where):
                 st.write(hint)
         # 每道题一个作答框 — 写完点检查,AI 只点评引导,不给正确答案
         # one answer box per problem; the AI reviews and guides, never solves
+        # key 里带上题目"代数" — 每套新题自动得到全新的空输入框 / generation-tagged keys
+        gen = st.session_state.get("practice_gen", 0)
         attempt = st.text_area("เขียนโค้ดของคุณ / Write your code / 写你的代码",
-                               key=f"attempt_{where}_{i}", height=120)
-        if st.button("ตรวจโค้ด / Check my code", key=f"check_{where}_{i}",
+                               key=f"attempt_{where}_{gen}_{i}", height=120)
+        if st.button("ตรวจโค้ด / Check my code", key=f"check_{where}_{gen}_{i}",
                      disabled=not attempt.strip()):
             with st.spinner("กำลังตรวจ / checking..."):
                 # 用英文题干送审最稳,反馈会按上面选的语言显示
@@ -320,10 +329,13 @@ def make_practice(data):
     st.session_state.practice = coach.generate_practice(
         data["error_type"], data["concept"], avoid=seen[-6:])
     seen.extend(p["th"]["problem"] for p in st.session_state.practice)
-    # 新题目 → 旧的作答和点评全部清掉 / new set → wipe old answers and feedback
-    for k in [k for k in st.session_state
-              if str(k).startswith(("fb_", "attempt_"))]:
-        del st.session_state[k]
+    # ⚠️ 不能删除还显示在屏幕上的输入框的状态 — Streamlit 会当场报错,页面卡死在半灰
+    # 改用"代数"方案: 每套新题换一个编号,输入框用新 key = 全新空白框,旧的自然作废
+    # NEVER delete state of widgets still on screen (crashes mid-update = frozen page).
+    # Instead bump a generation number: new keys = fresh empty boxes, old ones expire.
+    st.session_state.practice_gen = st.session_state.get("practice_gen", 0) + 1
+    for k in [k for k in st.session_state if str(k).startswith("fb_")]:
+        del st.session_state[k]   # 反馈不是控件,删除安全 / feedback isn't a widget: safe
 # 倒转字母版标题 — 每个字母换成 Unicode 里的"倒立字符",再倒序排列
 # upside-down title: each letter swapped for its flipped Unicode twin, order reversed
 st.title("ɥɔɐoɔ-ɹoɹɹǝ")
