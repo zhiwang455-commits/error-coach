@@ -18,14 +18,33 @@ st.set_page_config(page_title="error-coach", page_icon="🧭", layout="centered"
 # college emblem — st.logo pins it top-left; transparent PNG, gold suits dark mode
 st.logo("college_logo.png", size="large")
 
-# 页面顶部居中的队徽 connect — 转成 base64 塞进 HTML,才能用 CSS 类控制居中和变色
-# team logo top-center; base64-inlined so a CSS class can center + recolor it
+# 页面顶部居中的 error-coach 标志 — 原图是白底深字,已处理成透明底+米白字,
+# 深色页面上正好; 转成 base64 塞进 HTML,才能用 CSS 类控制居中和 Matrix 变色
+# error-coach logo top-center — reprocessed from white-bg/dark-text to
+# transparent-bg/off-white so it reads on the dark theme; base64-inlined
 import base64
-with open("connect_logo.png", "rb") as f:
-    _logo64 = base64.b64encode(f.read()).decode()
+def _b64(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+# 标志拆成两层完全同尺寸的图叠放: 米白字不动,橙色星号自己"呼吸" —
+# 模仿 Claude 思考时那颗一缩一放的星号
+# two same-size layers stacked: static cream letters + the orange asterisk
+# breathing on its own, like Claude's thinking indicator
 st.markdown(
-    f'<div style="text-align:center;margin:0 0 6px">'
-    f'<img class="connect-logo" src="data:image/png;base64,{_logo64}" width="320"></div>',
+    '<style>'
+    '@keyframes ec-think{0%,100%{transform:scale(1) rotate(0deg);opacity:.85}'
+    '50%{transform:scale(1.14) rotate(12deg);opacity:1}}'
+    # transform-origin = 星号在图里的中心位置 — 只绕自己转,不绕整张图转
+    # pivot at the ASTERISK's own center (56.7%,33.2%), not the image center
+    '.ec-star{position:absolute;inset:0;width:100%;'
+    'transform-origin:56.7% 33.2%;animation:ec-think 2.4s ease-in-out infinite}'
+    '@media (prefers-reduced-motion:reduce){.ec-star{animation:none}}'
+    '</style>'
+    '<div style="text-align:center;margin:0 0 6px">'
+    '<div class="connect-logo" style="position:relative;display:inline-block;width:320px">'
+    f'<img src="data:image/png;base64,{_b64("errorcoach_text.png")}" style="width:100%">'
+    f'<img class="ec-star" src="data:image/png;base64,{_b64("errorcoach_star.png")}">'
+    '</div></div>',
     unsafe_allow_html=True)
 
 # —— MATRIX 模式 / matrix mode ————————————————————————————————
@@ -296,7 +315,9 @@ def show_practice(where):
                                   default="ไทย", key=f"lang_{where}")
     lang, hint_word = LANGS[choice or "ไทย"]   # 取消选择时退回泰语 / deselect → Thai
     for i, p in enumerate(st.session_state.practice, 1):
-        st.markdown(f"**{i}. {p[lang]['problem']}**")
+        # 只加粗题号,不包整段 — 题目里若有 ``` 代码块,包进粗体会把格式弄花
+        # bold only the number: wrapping the whole text broke ``` code blocks
+        st.markdown(f"**{i}.** {p[lang]['problem']}")
         # 提示藏进折叠框 — 先自己想,卡住才点开 (§8.5: 引导,不给答案)
         # hints live in expanders — think first, open only when stuck
         for j, hint in enumerate(p[lang]["hints"], 1):
