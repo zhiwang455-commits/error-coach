@@ -74,6 +74,11 @@ if matrix:
        上面强制 Courier 会把它变回原文压在标签上,这里把图标字体还回去
        icons are an ICON FONT (the span literally contains its name);
        forcing Courier broke the ligature — restore the icon font here */
+    /* 例外规则必须比上面的文字规则"更具体"才能赢 — 否则图标又变回原文
+       the exception must OUTRANK the text rule in specificity, or icons
+       fall back to literal text again (this bit us twice) */
+    :is(.stApp, div[role="dialog"]) :is([data-testid="stIconMaterial"],
+        span[class*="material-symbols"]),
     [data-testid="stIconMaterial"], span[class*="material-symbols"] {
         font-family:"Material Symbols Rounded" !important;
         text-shadow:none !important;
