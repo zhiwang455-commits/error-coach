@@ -17,6 +17,54 @@ st.set_page_config(page_title="error-coach", page_icon="🧭", layout="centered"
 # 校徽 — st.logo 固定显示在页面左上角,图已抠好透明底,金色在深色主题上正好
 # college emblem — st.logo pins it top-left; transparent PNG, gold suits dark mode
 st.logo("college_logo.png", size="large")
+
+# —— MATRIX 模式 / matrix mode ————————————————————————————————
+# 一个开关切换全站主题;下面所有颜色都从这组变量取,图表跟着一起变色
+# one switch retints the whole site; charts read these variables too
+matrix = st.toggle("MATRIX MODE", key="matrix_mode")
+if matrix:
+    C_ACC, C_SEC = "#00FF41", "#1B8A3A"      # 图表: 主色荧光绿 / 次色暗绿
+    C_INK, C_CELL, C_DIM = "#B6FFC5", "#0E3D1C", "#66D97F"
+    CURSOR_GLOW, CURSOR_EDGE = "#00FF41", "#008F11"
+    SPARK_GLYPHS, SPARK_COLOR = ["0", "1"], ("#00FF41", "#00FF41")
+else:
+    C_ACC, C_SEC = "#FFB454", "#83c9ff"
+    C_INK, C_CELL, C_DIM = "#F4F1E8", "#2f4a63", "#D7ECFF"
+    CURSOR_GLOW, CURSOR_EDGE = "#a855f7", "#7c3aed"
+    SPARK_GLYPHS = ["\U0001F49C", "\U0001F90D", "\U0001F495", "♡"]
+    SPARK_COLOR = ("#c084fc", "#a855f7")
+
+if matrix:
+    # 全站换装: 黑底 + 荧光绿 + 等宽"黑客"字体 + 微微发光
+    # full restyle: black, neon green, monospace hacker font, soft glow
+    st.markdown("""<style>
+    .stApp, [data-testid="stHeader"] {background:#000 !important}
+    .stApp, .stApp p, .stApp span, .stApp label, .stApp li,
+    .stApp h1, .stApp h2, .stApp h3, .stApp small,
+    .stApp [data-testid="stMetricValue"], .stApp [data-testid="stMetricLabel"] {
+        color:#00FF41 !important;
+        font-family:"Courier New", monospace !important;
+        text-shadow:0 0 6px rgba(0,255,65,.35);
+    }
+    .stApp textarea, .stApp input, .stApp [data-baseweb="select"] > div {
+        background:#020D04 !important; color:#00FF41 !important;
+        border:1px solid #0F5C23 !important; font-family:"Courier New",monospace !important;
+    }
+    .stApp button {
+        background:#020D04 !important; color:#00FF41 !important;
+        border:1px solid #00FF41 !important;
+    }
+    .unicorn-dots {filter:hue-rotate(205deg) saturate(1.6)}  /* 独角兽也变绿 */
+    /* 图标是"图标字体"画的(span 里其实是文字 keyboard_arrow_right) —
+       上面强制 Courier 会把它变回原文压在标签上,这里把图标字体还回去
+       icons are an ICON FONT (the span literally contains its name);
+       forcing Courier broke the ligature — restore the icon font here */
+    .stApp [data-testid="stIconMaterial"],
+    .stApp span[class*="material-symbols"] {
+        font-family:"Material Symbols Rounded" !important;
+        text-shadow:none !important;
+    }
+    </style>""", unsafe_allow_html=True)
 # 右上角闪烁的"点阵独角兽" — 由 build_unicorn.py 从校徽取样生成,纯 CSS 动画零性能负担
 # the twinkling dot-unicorn in the top-right — sampled from the emblem by
 # build_unicorn.py; pure CSS animation, no JS, costs nothing
@@ -35,12 +83,12 @@ st.markdown(_unicorn, unsafe_allow_html=True)
 # SVG 箭头图。cursor: url(图, 热点x 热点y), auto — auto 是图加载失败时的后备
 # purple-glow cursor: CSS swaps the arrow for an SVG that carries its own glow;
 # the two numbers are the "hotspot" (which pixel actually clicks); auto = fallback
-_arrow = quote("""<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28">
+_arrow = quote(f"""<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28">
 <filter id="g"><feGaussianBlur stdDeviation="1.6"/></filter>
 <path d="M4 2 L4 22 L9.2 17.5 L12.6 25 L15.8 23.5 L12.4 16.2 L19 16 Z"
- fill="#a855f7" filter="url(#g)" opacity=".9"/>
+ fill="{CURSOR_GLOW}" filter="url(#g)" opacity=".9"/>
 <path d="M5 3 L5 20 L9.5 16.3 L12.7 23 L14.8 22 L11.7 15.2 L17.5 15 Z"
- fill="#fff" stroke="#7c3aed" stroke-width="1"/></svg>""")
+ fill="#fff" stroke="{CURSOR_EDGE}" stroke-width="1"/></svg>""")
 st.markdown(f"""<style>
 .stApp, .stApp * {{cursor: url('data:image/svg+xml,{_arrow}') 5 3, auto}}
 textarea, input {{cursor: text !important}}      /* 打字区仍是文字光标 / typing areas */
@@ -51,9 +99,14 @@ button, [role="tab"], a, summary {{cursor: pointer !important}}  /* 可点的仍
 # iframe 和主页面同源,能拿到 window.parent 去操作真正的页面
 # stardust trail — st.markdown blocks <script>, so a 0-height component iframe
 # runs the JS; it is same-origin, so window.parent reaches the real page
+import json as _json
 import streamlit.components.v1 as components
-components.html("""<script>
+_spark_js = """<script>
 const P = window.parent;
+// 每次重跑都更新粒子样式 — Matrix 开关一按,新粒子立刻变成绿色的 0 和 1
+// refreshed on every rerun — flipping Matrix mode changes new particles instantly
+P.__sdGlyphs = __GLYPHS__;
+P.__sdColors = __SDCOLORS__;
 // 只挂一次监听 + 尊重"减少动态"系统设置 / attach once; honor reduced-motion
 if (!P.__stardust && !P.matchMedia('(prefers-reduced-motion: reduce)').matches) {
   P.__stardust = true;
@@ -68,19 +121,119 @@ if (!P.__stardust && !P.matchMedia('(prefers-reduced-motion: reduce)').matches) 
     if (now - last < 45) return;   // 限流: 最多每 45ms 一颗心,不拖慢页面 / throttle
     last = now;
     const s = doc.createElement('div');
-    const hearts = ['\\u{1F49C}', '\\u{1F90D}', '\\u{1F495}', '\\u2661'];  // 💜 🤍 💕 ♡
-    s.textContent = hearts[Math.random()*hearts.length|0];
+    const glyphs = P.__sdGlyphs;   // 普通=爱心, Matrix=0/1 / hearts normally, 0/1 in Matrix
+    s.textContent = glyphs[Math.random()*glyphs.length|0];
     s.style.cssText = `position:fixed;left:${e.clientX + Math.random()*12 - 6}px;
       top:${e.clientY + Math.random()*12 - 6}px;pointer-events:none;z-index:99999;
-      font-size:${9 + Math.random()*8}px;color:#c084fc;
-      text-shadow:0 0 6px #a855f7;--dx:${Math.random()*28 - 14}px;
+      font-size:${9 + Math.random()*8}px;color:${P.__sdColors[0]};
+      text-shadow:0 0 6px ${P.__sdColors[1]};--dx:${Math.random()*28 - 14}px;
       --rot:${Math.random()*50 - 25}deg;
       animation:sd-fade ${0.7 + Math.random()*0.5}s ease-out forwards`;
     doc.body.appendChild(s);
     setTimeout(() => s.remove(), 1300);   // 心燃尽即删除,页面不积垃圾 / clean up
   });
 }
-</script>""", height=0)
+</script>"""
+# json.dumps 把 Python 列表变成合法的 JS 数组写进脚本 / lists → JS arrays safely
+components.html(_spark_js.replace("__GLYPHS__", _json.dumps(SPARK_GLYPHS))
+                         .replace("__SDCOLORS__", _json.dumps(list(SPARK_COLOR))),
+                height=0)
+
+# —— Matrix 数字雨 / digital rain ——————————————————————————————
+# 开关打开 → 造一块全屏画布画绿色字符雨; 关掉 → 删画布停计时器
+# on → full-screen canvas of falling green glyphs; off → canvas removed
+components.html(("""<script>
+const P = window.parent, doc = P.document, ON = __ON__;
+let c = doc.getElementById('mx-rain');
+if (ON && !c && !P.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  c = doc.createElement('canvas'); c.id = 'mx-rain';
+  // 盖在页面上但只有 14% 不透明度,内容照样能读; 点击穿透
+  // overlays the page at 14% opacity — content stays readable, clicks pass through
+  c.style.cssText = 'position:fixed;inset:0;z-index:9990;pointer-events:none;opacity:.14';
+  doc.body.appendChild(c);
+  const ctx = c.getContext('2d');
+  const size = () => { c.width = P.innerWidth; c.height = P.innerHeight; };
+  size(); P.addEventListener('resize', size);
+  const chars = 'アイウエオカキクケコサシスセソ01234567890101';
+  const fs = 16; let drops = [];
+  P.__mxTimer = setInterval(() => {
+    const n = Math.ceil(c.width / fs);
+    while (drops.length < n) drops.push(Math.random() * -60);
+    drops.length = n;
+    // 每帧铺一层半透明黑 → 旧字符渐渐淡出,形成拖尾 / translucent black = the fading tail
+    ctx.fillStyle = 'rgba(0,0,0,0.08)'; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.fillStyle = '#00FF41'; ctx.font = fs + 'px monospace';
+    for (let i = 0; i < drops.length; i++) {
+      ctx.fillText(chars[Math.random() * chars.length | 0], i * fs, drops[i] * fs);
+      if (drops[i] * fs > c.height && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    }
+  }, 50);
+}
+if (!ON && c) { clearInterval(P.__mxTimer); c.remove(); }
+</script>""").replace("__ON__", "true" if matrix else "false"), height=0)
+
+# —— Matrix 光标时钟 / cursor clock (90s classic, matrix green) ——————
+# 日期文字绕着光标转圈,中间是真会走的时/分/秒针 — 全部荧光绿
+# the date orbits the cursor; real hour/minute/second hands tick — all neon green
+components.html(("""<script>
+const P = window.parent, doc = P.document, ON = __ON__;
+let cv = doc.getElementById('mx-clock');
+if (ON && !cv && !P.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  cv = doc.createElement('canvas'); cv.id = 'mx-clock';
+  cv.style.cssText = 'position:fixed;inset:0;z-index:99998;pointer-events:none';
+  doc.body.appendChild(cv);
+  const ctx = cv.getContext('2d');
+  const size = () => { cv.width = P.innerWidth; cv.height = P.innerHeight; };
+  size(); P.addEventListener('resize', size);
+  let tx = P.innerWidth/2, ty = P.innerHeight/2, x = tx, y = ty;
+  P.__mxcMove = e => { tx = e.clientX; ty = e.clientY; };
+  doc.addEventListener('mousemove', P.__mxcMove);
+  const G = '#00FF41';
+  const hand = (ang, len, w, alpha) => {   // 一根表针 / one clock hand
+    ctx.beginPath(); ctx.lineWidth = w; ctx.lineCap = 'round';
+    ctx.strokeStyle = `rgba(0,255,65,${alpha})`;
+    ctx.moveTo(x, y); ctx.lineTo(x + Math.sin(ang)*len, y - Math.cos(ang)*len);
+    ctx.stroke();
+  };
+  const step = () => {
+    // 光标缓动追踪 — 90 年代那种飘飘的跟随感 / eased follow = the floaty 90s feel
+    x += (tx-x)*0.2; y += (ty-y)*0.2;
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    const now = new Date();
+    ctx.shadowColor = G; ctx.shadowBlur = 6;   // 荧光 / the neon glow
+    // 日期文字沿圆圈排一圈,整体缓慢旋转 / date characters on a slowly spinning ring
+    const txt = now.toDateString().toUpperCase() + ' * ';
+    const rot = performance.now()/6000, R = 44;
+    ctx.fillStyle = G; ctx.font = '11px monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (let i = 0; i < txt.length; i++) {
+      const a = rot + i/txt.length * 2*Math.PI;
+      ctx.save();
+      ctx.translate(x + Math.sin(a)*R, y - Math.cos(a)*R);
+      ctx.rotate(a);                     // 每个字符转到与圆相切 / chars tangent to ring
+      ctx.fillText(txt[i], 0, 0);
+      ctx.restore();
+    }
+    // 三根真实时间的表针 / three hands showing the REAL time
+    const s = now.getSeconds() + now.getMilliseconds()/1000;
+    const m = now.getMinutes() + s/60, h = (now.getHours()%12) + m/60;
+    hand(h/12*2*Math.PI, 16, 2.5, .9);   // 时针短而粗 / hour: short, thick
+    hand(m/60*2*Math.PI, 24, 1.5, .8);   // 分针 / minute
+    hand(s/60*2*Math.PI, 30, 1,  1);     // 秒针长而亮,会平滑扫动 / second: sweeps
+    ctx.beginPath(); ctx.fillStyle = G;  // 中心点 / center dot
+    ctx.arc(x, y, 2, 0, 2*Math.PI); ctx.fill();
+    ctx.shadowBlur = 0;
+    P.__mxcRAF = P.requestAnimationFrame(step);
+  };
+  step();
+}
+if (!ON && cv) {
+  P.cancelAnimationFrame(P.__mxcRAF);
+  doc.removeEventListener('mousemove', P.__mxcMove);
+  cv.remove();
+}
+</script>""").replace("__ON__", "true" if matrix else "false"), height=0)
 
 # 只给图表用的"好看名字" — CSV 里永远存 snake_case 原名,闭表 (§5) 一个字都不动
 # pretty DISPLAY names for charts only — the CSV keeps the raw snake_case taxonomy
@@ -292,16 +445,16 @@ with tab_teacher:
                 # paddingInner=0.45: 条与条之间留 45% 空隙,不再挤成一团
                 # 45% breathing room between bars — no more cramming
                 .encode(y=alt.Y("error_type:N", sort="-x", title=None,
-                                axis=alt.Axis(labelColor="#F4F1E8", labelFontSize=14,
+                                axis=alt.Axis(labelColor=C_INK, labelFontSize=14,
                                               labelFontWeight=600, labelLimit=260),
                                 scale=alt.Scale(paddingInner=0.45)),
                         x=alt.X("count:Q", axis=None),
                         color=alt.Color("zone:N", title=None,
                                         scale=alt.Scale(domain=["stuck zone (top 3)", "others"],
-                                                        range=["#FFB454", "#83c9ff"]))))
+                                                        range=[C_ACC, C_SEC]))))
         # 数字直接标在条尾 — 不用悬浮就看得见 / value at the bar end, no hover needed
         labels = bars.mark_text(align="left", dx=6).encode(text="count:Q",
-                                                           color=alt.value("#F4F1E8"))
+                                                           color=alt.value(C_INK))
         # alt.Step(44): 不定总高度,而是"每一行固定 44px" — 7 种错误就自动 7×44 高,
         # 行数再多标签也不会被挤到消失 / 44px PER ROW — labels can never be squeezed out
         st.altair_chart((bars + labels).properties(height=alt.Step(44))
@@ -319,19 +472,19 @@ with tab_teacher:
                  .encode(x=alt.X("student_id:N", title=None,
                                  # orient="top": 学生号放上面 · labelExpr 把 student_01 缩成 01
                                  # header on top; labelExpr shortens student_01 → 01
-                                 axis=alt.Axis(orient="top", labelAngle=0, labelColor="#99A0B5",
+                                 axis=alt.Axis(orient="top", labelAngle=0, labelColor=C_DIM,
                                                labelExpr="replace(datum.label,'student_','')"),
                                  scale=alt.Scale(paddingInner=0.15)),
                          y=alt.Y("error_type:N", title=None,
                                  sort=alt.EncodingSortField("count", op="sum", order="descending"),
-                                 axis=alt.Axis(labelColor="#F4F1E8", labelFontSize=14,
+                                 axis=alt.Axis(labelColor=C_INK, labelFontSize=14,
                                                labelFontWeight=600, labelLimit=260),
                                  scale=alt.Scale(paddingInner=0.2)),
                          # 到达 3 次 → 琥珀色警报, 其余 → 蓝色 / ≥3 amber alarm, else blue
-                         color=alt.condition(hot, alt.value("#FFB454"), alt.value("#2f4a63"))))
+                         color=alt.condition(hot, alt.value(C_ACC), alt.value(C_CELL))))
         nums = cells.mark_text(fontWeight="bold", fontSize=14).encode(
             text="count:Q",
-            color=alt.condition(hot, alt.value("#14161F"), alt.value("#D7ECFF")))
+            color=alt.condition(hot, alt.value("#14161F"), alt.value(C_DIM)))
         # 每行固定 46px — 类型再多也每行清清楚楚 / 46px per row, always readable
         st.altair_chart((cells + nums).properties(height=alt.Step(46))
                         .configure_view(strokeWidth=0),
