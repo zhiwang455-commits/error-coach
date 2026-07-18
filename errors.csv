@@ -223,3 +223,21 @@ num = 3
 area = calculate_area(num)
 print(area)
     "
+2026-07-18T22:07:21,student_04,return_vs_print,None,"def calculate_area(num):
+    area = num * num
+
+num = 3
+area = calculate_area(num)
+print(area)"
+2026-07-18T22:07:39,student_04,return_vs_print,None,"def calculate_area(num):
+    area = num * num
+
+num = 3
+area = calculate_area(num)
+print(area)"
+2026-07-18T22:07:40,student_04,return_vs_print,None,"def calculate_area(num):
+    area = num * num
+
+num = 3
+area = calculate_area(num)
+print(area)"
