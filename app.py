@@ -290,6 +290,24 @@ def show_practice(where):
         for j, hint in enumerate(p[lang]["hints"], 1):
             with st.expander(f"{hint_word} {j}"):
                 st.write(hint)
+        # 每道题一个作答框 — 写完点检查,AI 只点评引导,不给正确答案
+        # one answer box per problem; the AI reviews and guides, never solves
+        attempt = st.text_area("เขียนโค้ดของคุณ / Write your code / 写你的代码",
+                               key=f"attempt_{where}_{i}", height=120)
+        if st.button("ตรวจโค้ด / Check my code", key=f"check_{where}_{i}",
+                     disabled=not attempt.strip()):
+            with st.spinner("กำลังตรวจ / checking..."):
+                # 用英文题干送审最稳,反馈会按上面选的语言显示
+                # review against the English problem text; feedback follows the switch
+                st.session_state[f"fb_{where}_{i}"] = coach.review_attempt(
+                    p["en"]["problem"], attempt)
+        fb = st.session_state.get(f"fb_{where}_{i}")
+        if fb:
+            # 对/接近/不对 → 绿/黄/红 三种框 / verdict picks the box color
+            box = {"correct": st.success, "almost": st.warning,
+                   "incorrect": st.error}[fb["verdict"]]
+            box(fb.get(lang) or fb["en"])
+        st.divider()
 
 
 def make_practice(data):
@@ -302,6 +320,10 @@ def make_practice(data):
     st.session_state.practice = coach.generate_practice(
         data["error_type"], data["concept"], avoid=seen[-6:])
     seen.extend(p["th"]["problem"] for p in st.session_state.practice)
+    # 新题目 → 旧的作答和点评全部清掉 / new set → wipe old answers and feedback
+    for k in [k for k in st.session_state
+              if str(k).startswith(("fb_", "attempt_"))]:
+        del st.session_state[k]
 # 倒转字母版标题 — 每个字母换成 Unicode 里的"倒立字符",再倒序排列
 # upside-down title: each letter swapped for its flipped Unicode twin, order reversed
 st.title("ɥɔɐoɔ-ɹoɹɹǝ")

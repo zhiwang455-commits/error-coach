@@ -198,6 +198,34 @@ def count_times(student_id, error_type):
                    and row["error_type"] == error_type)
 
 
+def review_attempt(problem, code):
+    """点评学生对练习题的作答 — 判对错 + 三语反馈;只引导,永不给答案。
+    Review one practice attempt: verdict + feedback in th/en/zh, NEVER the answer."""
+    prompt = (
+        "You are a teaching assistant for Thai programming beginners.\n"
+        f"Practice problem:\n{problem}\n\n"
+        f"Student's attempted code:\n{code}\n\n"
+        "Judge the attempt against the problem. Return ONLY JSON, no other text:\n"
+        '{"verdict": "correct" or "almost" or "incorrect",\n'
+        ' "th": "short feedback in simple Thai",\n'
+        ' "en": "the same feedback in simple English",\n'
+        ' "zh": "the same feedback in simplified Chinese"}\n'
+        "Rules: NEVER include corrected code or the full answer. Name the specific "
+        "line or idea that is wrong, then ask ONE guiding question that leads the "
+        "student to fix it themselves. If correct, say why it works and suggest "
+        "one small extra challenge."
+    )
+    raw = ask_ai(prompt, temperature=0)   # 评卷要稳定 / grading should be stable
+    try:
+        data = json.loads(extract_json(raw))
+    except json.JSONDecodeError:
+        data = json.loads(extract_json(ask_ai(prompt, temperature=0)))
+    # 保险丝: 未知判定一律当"接近" / fuse: unknown verdict → "almost"
+    if data.get("verdict") not in ("correct", "almost", "incorrect"):
+        data["verdict"] = "almost"
+    return data
+
+
 def tutor_link(code):
     """生成 Python Tutor 链接 — 学生能"亲眼看"电脑一行一行执行自己的代码。
     Build a Python Tutor URL — the student WATCHES the computer run their own code.
