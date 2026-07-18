@@ -18,6 +18,16 @@ st.set_page_config(page_title="error-coach", page_icon="🧭", layout="centered"
 # college emblem — st.logo pins it top-left; transparent PNG, gold suits dark mode
 st.logo("college_logo.png", size="large")
 
+# 页面顶部居中的队徽 connect — 转成 base64 塞进 HTML,才能用 CSS 类控制居中和变色
+# team logo top-center; base64-inlined so a CSS class can center + recolor it
+import base64
+with open("connect_logo.png", "rb") as f:
+    _logo64 = base64.b64encode(f.read()).decode()
+st.markdown(
+    f'<div style="text-align:center;margin:0 0 6px">'
+    f'<img class="connect-logo" src="data:image/png;base64,{_logo64}" width="320"></div>',
+    unsafe_allow_html=True)
+
 # —— MATRIX 模式 / matrix mode ————————————————————————————————
 # 一个开关切换全站主题;下面所有颜色都从这组变量取,图表跟着一起变色
 # one switch retints the whole site; charts read these variables too
@@ -55,6 +65,10 @@ if matrix:
         border:1px solid #00FF41 !important;
     }
     .unicorn-dots {filter:hue-rotate(205deg) saturate(1.6)}  /* 独角兽也变绿 */
+    /* 队徽变绿: 白色本身转不了色,先 sepia 上色再转到绿 + 荧光
+       white can't hue-rotate (no color in it) — sepia tints it first, then rotate to green */
+    .connect-logo {filter:brightness(.85) sepia(1) hue-rotate(85deg) saturate(4)
+                   brightness(1.15) drop-shadow(0 0 10px rgba(0,255,65,.45));}
     /* 图标是"图标字体"画的(span 里其实是文字 keyboard_arrow_right) —
        上面强制 Courier 会把它变回原文压在标签上,这里把图标字体还回去
        icons are an ICON FONT (the span literally contains its name);
