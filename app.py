@@ -309,8 +309,13 @@ def show_practice(where):
                 # 用英文题干送审最稳,反馈会按上面选的语言显示
                 # review against the English problem text; feedback follows the switch
                 try:
+                    # 把上一次点评(可能含加分挑战)一起送去 — 完成挑战也能被判对
+                    # send the previous feedback too, so completing its extra
+                    # challenge is judged as correct, not "doesn't match problem"
+                    _prior = st.session_state.get(f"fb_{where}_{i}")
                     st.session_state[f"fb_{where}_{i}"] = coach.review_attempt(
-                        p["en"]["problem"], attempt)
+                        p["en"]["problem"], attempt,
+                        prior_feedback=_prior and _prior.get("en"))
                 except Exception:
                     # AI 连续两次答非所值也不能让整页崩 — 给个"再试一次"的软着陆
                     # even a doubly-bad AI reply must not crash the page: soft-land

@@ -206,9 +206,15 @@ def count_times(student_id, error_type):
                    and row["error_type"] == error_type)
 
 
-def review_attempt(problem, code):
+def review_attempt(problem, code, prior_feedback=None):
     """点评学生对练习题的作答 — 判对错 + 三语反馈;只引导,永不给答案。
-    Review one practice attempt: verdict + feedback in th/en/zh, NEVER the answer."""
+    Review one practice attempt: verdict + feedback in th/en/zh, NEVER the answer.
+
+    prior_feedback: 上一次的点评 — 里面可能有 AI 自己出的"加分挑战";
+    不传的话,学生完成挑战反而会被当成做错 (参数比题目多了之类)
+    the previous review — it may contain an EXTRA CHALLENGE the AI itself
+    offered; without it, a student who completes the challenge gets marked
+    wrong for 'not matching the original problem'."""
     prompt = (
         "You are a teaching assistant for Thai programming beginners.\n"
         f"Practice problem:\n{problem}\n\n"
@@ -223,6 +229,15 @@ def review_attempt(problem, code):
         "student to fix it themselves. If correct, say why it works and suggest "
         "one small extra challenge."
     )
+    if prior_feedback:
+        prompt += (
+            "\n\nYour PREVIOUS feedback to this student on this problem was:\n"
+            f"{prior_feedback}\n"
+            "If that feedback offered an extra challenge and the new attempt is "
+            "answering it, judge the attempt against the CHALLENGE — solving the "
+            "challenge counts as correct even where it goes beyond the original "
+            "problem statement. Then offer one further challenge."
+        )
     raw = ask_ai(prompt, temperature=0)   # 评卷要稳定 / grading should be stable
     try:
         data = parse_ai_json(raw)
