@@ -308,8 +308,17 @@ def show_practice(where):
             with st.spinner("กำลังตรวจ / checking..."):
                 # 用英文题干送审最稳,反馈会按上面选的语言显示
                 # review against the English problem text; feedback follows the switch
-                st.session_state[f"fb_{where}_{i}"] = coach.review_attempt(
-                    p["en"]["problem"], attempt)
+                try:
+                    st.session_state[f"fb_{where}_{i}"] = coach.review_attempt(
+                        p["en"]["problem"], attempt)
+                except Exception:
+                    # AI 连续两次答非所值也不能让整页崩 — 给个"再试一次"的软着陆
+                    # even a doubly-bad AI reply must not crash the page: soft-land
+                    st.session_state[f"fb_{where}_{i}"] = {
+                        "verdict": "almost",
+                        "th": "ระบบอ่านคำตอบของ AI ไม่สำเร็จ กรุณากดตรวจอีกครั้ง",
+                        "en": "Couldn't read the AI's reply — please press Check again.",
+                        "zh": "AI 回复解析失败，请再点一次检查。"}
         fb = st.session_state.get(f"fb_{where}_{i}")
         if fb:
             # 对/接近/不对 → 绿/黄/红 三种框 / verdict picks the box color

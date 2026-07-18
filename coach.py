@@ -121,6 +121,14 @@ def extract_json(text):
     return text[text.find("{"):text.rfind("}") + 1]
 
 
+def parse_ai_json(raw):
+    """解析 AI 返回的 JSON。strict=False 是关键: AI 经常在字符串里写真换行,
+    严格模式直接炸 (线上就是这样崩的),宽松模式照单全收。
+    Parse AI JSON. strict=False is the key: AI often puts REAL newlines inside
+    strings — strict mode explodes (that crashed us in prod), lenient accepts."""
+    return json.loads(extract_json(raw), strict=False)
+
+
 def _load_cache():
     if os.path.exists(CACHE_FILE):
         with open(CACHE_FILE, encoding="utf-8") as f:
@@ -153,11 +161,11 @@ def classify(code, error):
                     .replace("{error}", error))
     raw = ask_ai(prompt, temperature=0)   # 分类要稳定, 不要创造性 / stable, not creative
     try:
-        data = json.loads(extract_json(raw))
+        data = parse_ai_json(raw)
     except json.JSONDecodeError:
         # AI 偶尔返回坏 JSON — 重试一次通常就好；两次都坏就让上层报错
         # occasionally the JSON is broken — one retry usually fixes it
-        data = json.loads(extract_json(ask_ai(prompt, temperature=0)))
+        data = parse_ai_json(ask_ai(prompt, temperature=0))
 
     # 保险丝：分类不在表里 → 强制 other，脏标签永远进不了 CSV (§5)
     # the fuse: unknown label → "other"; dirty labels never reach the CSV
@@ -217,9 +225,9 @@ def review_attempt(problem, code):
     )
     raw = ask_ai(prompt, temperature=0)   # 评卷要稳定 / grading should be stable
     try:
-        data = json.loads(extract_json(raw))
+        data = parse_ai_json(raw)
     except json.JSONDecodeError:
-        data = json.loads(extract_json(ask_ai(prompt, temperature=0)))
+        data = parse_ai_json(ask_ai(prompt, temperature=0))
     # 保险丝: 未知判定一律当"接近" / fuse: unknown verdict → "almost"
     if data.get("verdict") not in ("correct", "almost", "incorrect"):
         data["verdict"] = "almost"
@@ -261,7 +269,7 @@ def generate_practice(error_type, concept, avoid=None):
                    "problems (different story, different data):\n- " + "\n- ".join(avoid))
     raw = ask_ai(prompt)
     try:
-        return json.loads(extract_json(raw))["problems"]
+        return parse_ai_json(raw)["problems"]
     except json.JSONDecodeError:
         # 坏 JSON 重试一次 — 和 classify() 同一招 / one retry, same trick as classify()
-        return json.loads(extract_json(ask_ai(prompt)))["problems"]
+        return parse_ai_json(ask_ai(prompt))["problems"]
