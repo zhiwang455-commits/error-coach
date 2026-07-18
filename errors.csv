@@ -216,3 +216,10 @@ print(num)"
     area = num * num
 
 print(num)"
+2026-07-18T21:43:47,student_01,return_vs_print,None,"def calculate_area(num):
+    area = num * num
+
+num = 3
+area = calculate_area(num)
+print(area)
+    "

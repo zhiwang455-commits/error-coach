@@ -101,16 +101,23 @@ Error:
 {error}"""
 
 
-def ask_ai(prompt, temperature=1.0):
+def ask_ai(prompt, temperature=1.0, json_mode=False):
     """唯一直接调 API 的地方 — 以后换供应商只改这一个函数。
     The ONLY function that touches the API — swapping providers = editing here only.
 
     temperature: 0 = 每次几乎同答案(分类用), 1 = 有创造性(出题用)
-                 0 = same answer every time (classification), 1 = creative (practice)"""
+                 0 = same answer every time (classification), 1 = creative (practice)
+    json_mode: True = API 保证返回合法 JSON — 反馈里带引号也不会再把解析弄崩
+               True = the API GUARANTEES valid JSON; quotes inside feedback
+               text can no longer break parsing (that bug bit us twice)"""
+    kwargs = {}
+    if json_mode:
+        kwargs["response_format"] = {"type": "json_object"}
     response = client.chat.completions.create(
         model="deepseek-chat",
         temperature=temperature,
         messages=[{"role": "user", "content": prompt}],
+        **kwargs,
     )
     return response.choices[0].message.content
 
@@ -159,13 +166,13 @@ def classify(code, error):
     prompt = (PROMPT.replace("{types}", ", ".join(ERROR_TYPES))
                     .replace("{code}", code)
                     .replace("{error}", error))
-    raw = ask_ai(prompt, temperature=0)   # 分类要稳定, 不要创造性 / stable, not creative
+    raw = ask_ai(prompt, temperature=0, json_mode=True)   # 分类要稳定, 不要创造性 / stable, not creative
     try:
         data = parse_ai_json(raw)
     except json.JSONDecodeError:
         # AI 偶尔返回坏 JSON — 重试一次通常就好；两次都坏就让上层报错
         # occasionally the JSON is broken — one retry usually fixes it
-        data = parse_ai_json(ask_ai(prompt, temperature=0))
+        data = parse_ai_json(ask_ai(prompt, temperature=0, json_mode=True))
 
     # 保险丝：分类不在表里 → 强制 other，脏标签永远进不了 CSV (§5)
     # the fuse: unknown label → "other"; dirty labels never reach the CSV
@@ -238,11 +245,11 @@ def review_attempt(problem, code, prior_feedback=None):
             "challenge counts as correct even where it goes beyond the original "
             "problem statement. Then offer one further challenge."
         )
-    raw = ask_ai(prompt, temperature=0)   # 评卷要稳定 / grading should be stable
+    raw = ask_ai(prompt, temperature=0, json_mode=True)   # 评卷要稳定 / grading should be stable
     try:
         data = parse_ai_json(raw)
     except json.JSONDecodeError:
-        data = parse_ai_json(ask_ai(prompt, temperature=0))
+        data = parse_ai_json(ask_ai(prompt, temperature=0, json_mode=True))
     # 保险丝: 未知判定一律当"接近" / fuse: unknown verdict → "almost"
     if data.get("verdict") not in ("correct", "almost", "incorrect"):
         data["verdict"] = "almost"
@@ -282,9 +289,9 @@ def generate_practice(error_type, concept, avoid=None):
     if avoid:
         prompt += ("\nThe student ALREADY did these — write clearly DIFFERENT "
                    "problems (different story, different data):\n- " + "\n- ".join(avoid))
-    raw = ask_ai(prompt)
+    raw = ask_ai(prompt, json_mode=True)
     try:
         return parse_ai_json(raw)["problems"]
     except json.JSONDecodeError:
         # 坏 JSON 重试一次 — 和 classify() 同一招 / one retry, same trick as classify()
-        return parse_ai_json(ask_ai(prompt))["problems"]
+        return parse_ai_json(ask_ai(prompt, json_mode=True))["problems"]
